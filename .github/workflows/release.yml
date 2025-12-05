@@ -36,17 +36,16 @@ jobs:
       - name: Build Tauri app
         run: npm run tauri build -- --target ${{ matrix.target }}
 
-      - name: Prepare artifacts
+      - name: Check build output
         run: |
-          mkdir -p ./artifacts
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg ./artifacts/ || true
-          ls -la ./artifacts/
+          echo "Looking for DMG files..."
+          find src-tauri/target -name "*.dmg" -type f || echo "No DMG found, checking directory structure..."
+          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/ || echo "Bundle directory not found"
 
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./artifacts/*
+          files: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
