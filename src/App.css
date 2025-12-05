@@ -1,0 +1,433 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Zen Maru Gothic - Jinba theme font */
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  src: url('./assets/fonts/zen-maru-gothic/ZenMaruGothic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  src: url('./assets/fonts/zen-maru-gothic/ZenMaruGothic-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  src: url('./assets/fonts/zen-maru-gothic/ZenMaruGothic-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Jinba-inspired color palette - traditional Japanese indigo (ai-iro) */
+:root {
+  --background: oklch(0.12 0.02 250);
+  --foreground: oklch(0.95 0.01 85);
+  --card: oklch(0.16 0.025 250);
+  --card-foreground: oklch(0.95 0.01 85);
+  --popover: oklch(0.16 0.025 250);
+  --popover-foreground: oklch(0.95 0.01 85);
+  --primary: oklch(0.75 0.12 250);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --secondary: oklch(0.65 0.08 45);
+  --secondary-foreground: oklch(0.15 0.02 250);
+  --muted: oklch(0.22 0.02 250);
+  --muted-foreground: oklch(0.65 0.02 250);
+  --accent: oklch(0.8 0.1 45);
+  --accent-foreground: oklch(0.15 0.02 250);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.3 0.04 250);
+  --input: oklch(0.22 0.02 250);
+  --ring: oklch(0.75 0.12 250);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 1rem;
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+
+  /* Jinba custom colors */
+  --ai-iro: oklch(0.45 0.12 250);
+  --ai-light: oklch(0.65 0.1 250);
+  --kincha: oklch(0.75 0.12 65);
+  --sakura-soft: oklch(0.88 0.08 10);
+  --cream: oklch(0.96 0.02 85);
+  --sumi: oklch(0.2 0.02 250);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --font-sans: "Zen Maru Gothic", "Nunito", system-ui;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Jinba color tokens */
+  --color-ai-iro: var(--ai-iro);
+  --color-ai-light: var(--ai-light);
+  --color-kincha: var(--kincha);
+  --color-sakura-soft: var(--sakura-soft);
+  --color-cream: var(--cream);
+  --color-sumi: var(--sumi);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    @apply text-foreground;
+  }
+
+  /* Allow buttons and interactive elements to be clickable within draggable regions */
+  button,
+  a,
+  [role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* Jinba-themed animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes gallop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+@keyframes mane-flow {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  50% {
+    transform: skewX(-5deg);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3) translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) translateY(-5px);
+  }
+  70% {
+    transform: scale(0.95) translateY(2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    box-shadow: 0 0 15px oklch(0.45 0.12 250 / 0.3), 0 4px 20px oklch(0 0 0 / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px oklch(0.45 0.12 250 / 0.5), 0 4px 30px oklch(0 0 0 / 0.3);
+  }
+}
+
+@keyframes typing-dots {
+  0%,
+  20% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes kanji-rise {
+  0% {
+    transform: translateY(10px) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-30px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes tail-swish {
+  0%,
+  100% {
+    transform: rotate(-15deg) scaleX(1);
+  }
+  50% {
+    transform: rotate(15deg) scaleX(1.1);
+  }
+}
+
+@keyframes ear-twitch {
+  0%,
+  90%,
+  100% {
+    transform: rotate(0deg);
+  }
+  93% {
+    transform: rotate(-8deg);
+  }
+  96% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes blink {
+  0%,
+  45%,
+  55%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(80px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@keyframes success-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes brush-stroke {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes unity-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.3;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-gallop {
+  animation: gallop 0.6s ease-in-out infinite;
+}
+.animate-mane-flow {
+  animation: mane-flow 2s ease-in-out infinite;
+}
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+.animate-kanji-rise {
+  animation: kanji-rise 1.8s ease-out forwards;
+}
+.animate-tail-swish {
+  animation: tail-swish 0.4s ease-in-out infinite;
+}
+.animate-ear-twitch {
+  animation: ear-twitch 4s ease-in-out infinite;
+}
+.animate-blink {
+  animation: blink 3.5s ease-in-out infinite;
+}
+.animate-confetti {
+  animation: confetti-fall 1.2s ease-out forwards;
+}
+.animate-success-bounce {
+  animation: success-bounce 0.4s ease-out;
+}
+.animate-brush-stroke {
+  stroke-dasharray: 100;
+  animation: brush-stroke 0.8s ease-out forwards;
+}
+.animate-unity-pulse {
+  animation: unity-pulse 2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(1) {
+  animation: typing-dots 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation: typing-dots 1.2s ease-in-out 0.15s infinite;
+}
+.typing-dot:nth-child(3) {
+  animation: typing-dots 1.2s ease-in-out 0.3s infinite;
+}
