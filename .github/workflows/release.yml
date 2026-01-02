@@ -60,7 +60,7 @@ jobs:
           find src-tauri/target -name "*.dmg" -type f
       - name: Upload macOS DMG
         run: |
-          for file in src-tauri/target/*/release/bundle/macos/*.dmg; do
+          find src-tauri/target -name "*.dmg" -type f | while read file; do
             if [ -f "$file" ]; then
               echo "Uploading: $file"
               gh release upload ${{ github.ref_name }} "$file" --clobber
