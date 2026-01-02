@@ -17,6 +17,29 @@ jobs:
             target: x86_64-apple-darwin
     steps:
       - uses: actions/checkout@v4
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes "🚀 Japanese Translator ${{ github.ref_name }}
+
+          ## Downloads
+          - **macOS**: Download \`.dmg\` file (Apple Silicon or Intel)
+          - **Windows**: Download \`.msi\` file
+          - **Linux**: Download \`.AppImage\` or \`.deb\` file
+
+          ## What's New
+          See commits for details.
+
+          ---
+
+          🤖 Built with [Tauri](https://tauri.app) + Cloudflare Workers AI" \
+            --draft=false \
+            --prerelease=false \
+            || echo "Release already exists, skipping creation"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -48,6 +71,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} `
+            --title "Release ${{ github.ref_name }}" `
+            --notes "🚀 Japanese Translator ${{ github.ref_name }}`n`n## Downloads`n- **macOS**: Download ``.dmg`` file (Apple Silicon or Intel)`n- **Windows**: Download ``.msi`` file`n- **Linux**: Download ``.AppImage`` or ``.deb`` file`n`n## What's New`nSee commits for details.`n`n---`n`n🤖 Built with [Tauri](https://tauri.app) + Cloudflare Workers AI" `
+            --draft=false `
+            --prerelease=false `
+            || echo "Release already exists, skipping creation"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
@@ -77,6 +111,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes "🚀 Japanese Translator ${{ github.ref_name }}
+
+          ## Downloads
+          - **macOS**: Download \`.dmg\` file (Apple Silicon or Intel)
+          - **Windows**: Download \`.msi\` file
+          - **Linux**: Download \`.AppImage\` or \`.deb\` file
+
+          ## What's New
+          See commits for details.
+
+          ---
+
+          🤖 Built with [Tauri](https://tauri.app) + Cloudflare Workers AI" \
+            --draft=false \
+            --prerelease=false \
+            || echo "Release already exists, skipping creation"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
