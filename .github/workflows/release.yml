@@ -6,6 +6,18 @@ on:
       - 'v*'
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
   build-macos:
     runs-on: macos-latest
     strategy:
@@ -29,12 +41,20 @@ jobs:
           args: --target ${{ matrix.target }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload macOS
+      - name: List build output
         run: |
-          cd src-tauri/target/${{ matrix.target }}/release/bundle/macos
-          for f in *.dmg; do [ -f "$f" ] && gh release upload ${{ github.ref_name }} "$f"; done
+          find src-tauri/target -name "*.dmg" -type f
+      - name: Upload macOS DMG
+        run: |
+          for file in src-tauri/target/*/release/bundle/macos/*.dmg; do
+            if [ -f "$file" ]; then
+              echo "Uploading: $file"
+              gh release upload ${{ github.ref_name }} "$file" --clobber
+            fi
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
   build-windows:
     runs-on: windows-latest
@@ -48,12 +68,22 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Windows
+      - name: List build output
         run: |
-          cd src-tauri/target/release/bundle/msi
-          Get-ChildItem *.msi | ForEach-Object { gh release upload ${{ github.ref_name }} $_.FullName }
+          Get-ChildItem -Path "src-tauri/target" -Filter "*.msi" -Recurse
+      - name: Upload Windows MSI
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path "src-tauri/target" -Filter "*.msi" -Recurse
+          foreach ($file in $files) {
+            if ($file.Exists) {
+              Write-Host "Uploading: $($file.FullName)"
+              gh release upload ${{ github.ref_name }} "$($file.FullName)" --clobber
+            }
+          }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
   build-linux:
     runs-on: ubuntu-latest
@@ -63,18 +93,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: |
+      - name: Install Linux dependencies
+        run: |
           sudo apt-get update
-          sudo apt-get install -y libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          sudo apt-get install -y \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libjavascriptcoregtk-4.1-dev
       - run: npm ci
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Linux
+      - name: List build output
         run: |
-          cd src-tauri/target/release/bundle
-          find . -type f \( -name "*.AppImage" -o -name "*.deb" \) | while read f; do
-            gh release upload ${{ github.ref_name }} "$f"
+          find src-tauri/target -type f \( -name "*.AppImage" -o -name "*.deb" \)
+      - name: Upload Linux AppImage and DEB
+        run: |
+          find src-tauri/target -type f \( -name "*.AppImage" -o -name "*.deb" \) | while read file; do
+            if [ -f "$file" ]; then
+              echo "Uploading: $file"
+              gh release upload ${{ github.ref_name }} "$file" --clobber
+            fi
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
