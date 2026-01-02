@@ -29,8 +29,7 @@ pub fn run() {
 
             // Log configuration
             println!("[INFO] Translation Config:");
-            println!("  Ollama URL: {}", translation_config.ollama_base_url);
-            println!("  Ollama model: {}", translation_config.ollama_model);
+            println!("  Worker URL: {}", translation_config.worker_url);
 
             // Set up app state
             app.manage(AppState {
@@ -89,7 +88,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::check_ollama_status,
             commands::translate_selection
         ])
         .run(tauri::generate_context!())

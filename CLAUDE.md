@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Tauri desktop application for translating selected text between Japanese and English. It uses a global hotkey (Cmd+J on macOS, Ctrl+J on Windows) to capture selected text, translate it via the Gemini API, and paste the translation back - all without leaving the active application.
+This is a Tauri desktop application for translating selected text between Japanese and English. It uses a global hotkey (Cmd+J on macOS, Ctrl+J on Windows) to capture selected text, translate it via Cloudflare Workers AI (Gemma 3 model), and display the translation in a floating overlay - all without leaving the active application.
 
 ## Commands
 
@@ -43,11 +43,9 @@ The Rust backend handles all system integration and translation logic:
     2. Simulates Cmd+C to copy selected text
     3. Reads clipboard to get selected text
     4. Detects language (Japanese vs English)
-    5. Calls translation API
-    6. Writes translation to clipboard
-    7. Simulates Cmd+V to paste translation
-    8. Restores original clipboard content
-    9. Emits `show-translation` event to frontend
+    5. Calls Cloudflare Worker for translation
+    6. Restores original clipboard content
+    7. Emits `show-translation` event to frontend (overlay-only mode, no pasting)
 
 - **src-tauri/src/clipboard_manager.rs**: SmartClipboard utility
   - Manages clipboard save/restore to avoid clobbering user's clipboard
@@ -57,8 +55,9 @@ The Rust backend handles all system integration and translation logic:
 - **src-tauri/src/translation.rs**: Translation logic
   - `detect_language()`: Detects if text contains Japanese characters (Hiragana, Katakana, Kanji)
   - `get_target_language()`: Maps source language to target (JA→EN or EN→JA)
-  - `translate()`: Calls Gemini 2.0 Flash API for translation
-  - **Note**: API key is hardcoded - should be moved to environment variable
+  - `translate()`: Calls Cloudflare Worker proxy endpoint for translation
+  - Worker uses Gemma 3 (12B) model for high-quality multilingual translation
+  - **Note**: Worker URL is configured via WORKER_URL environment variable
 
 ### Key Tauri Configuration (tauri.conf.json)
 - Window is transparent, always-on-top, borderless, non-resizable (450x250)
@@ -90,10 +89,14 @@ The `SmartClipboard` pattern is critical:
 
 This ensures user's clipboard isn't permanently modified.
 
-### Translation API
-- Uses Gemini 2.0 Flash via REST API
-- Language detection is heuristic-based (checks for Japanese Unicode ranges)
+### Translation API (Cloudflare Workers AI)
+- Desktop app calls Cloudflare Worker proxy endpoint
+- Worker runs `@cf/google/gemma-3-12b-it` model (140+ languages)
+- Request format: `{text: string, target_lang: "ja" | "en"}`
+- Response format: `{translation: string, model: string, detected_lang: string}`
+- Language detection: Heuristic-based (checks for Japanese Unicode ranges)
 - Threshold: >10% Japanese characters → considered Japanese text
+- API credentials stored server-side in Worker (not exposed to desktop app)
 
 ### Event Communication
 Rust backend → Frontend communication uses Tauri's event system:
@@ -111,6 +114,8 @@ listen<TranslationResult>("show-translation", (event) => { ... })
 
 2. **Lock Lifecycle**: Release `Mutex` locks before `await` operations to prevent deadlocks. The `translate_selection` function carefully scopes lock acquisition.
 
-3. **API Key Security**: The Gemini API key is currently hardcoded in `translation.rs:4`. Should be moved to `.env` file or config.
+3. **Worker URL Configuration**: The Cloudflare Worker URL is configured via the `WORKER_URL` environment variable. Must point to a deployed Worker with the `@cf/google/gemma-3-12b-it` model bound as `AI`.
 
-4. **Window Visibility**: The Tauri window starts visible but empty. Frontend shows hint text when no translation is active.
+4. **Internet Requirement**: Unlike the previous Ollama implementation, this version requires internet connectivity for all translations. The Worker must be reachable.
+
+5. **Window Visibility**: The Tauri window starts visible but empty. Frontend shows hint text when no translation is active.

@@ -18,15 +18,6 @@ pub struct TranslationResult {
     pub target_lang: String,
 }
 
-/// Check Ollama and model availability
-#[tauri::command]
-pub async fn check_ollama_status(
-    state: State<'_, AppState>,
-) -> Result<translation::OllamaStatus, String> {
-    let status = translation::check_ollama_status(&state.translation_config).await;
-    Ok(status)
-}
-
 #[tauri::command]
 pub async fn translate_selection(
     app: AppHandle,

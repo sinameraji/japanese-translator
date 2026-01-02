@@ -1,8 +1,8 @@
 # 🦙 Japanese Slack Translator
 
-A beautiful, lightweight desktop app that translates selected text between Japanese and English using **Ollama** with qwen2.5:1.5b model. Works anywhere on your Mac with a global hotkey (Cmd+J).
+A beautiful, lightweight desktop app that translates selected text between Japanese and English using **Cloudflare Workers AI** with Gemma 3. Works anywhere on your Mac with a global hotkey (Cmd+J).
 
-> **Privacy-first**: Everything runs locally on your machine. No API calls to external services. No data sent anywhere.
+> **Cloud-Powered**: Powered by Cloudflare Workers AI for accurate translations. Requires internet connection.
 
 ## Features
 
@@ -14,11 +14,11 @@ A beautiful, lightweight desktop app that translates selected text between Japan
 - Automatically detects if text is Japanese or English
 - Translates to the opposite language
 
-🔒 **100% Local**
-- Uses Ollama + qwen2.5:1.5b model
-- No internet required after initial setup
-- No API keys needed
-- Complete privacy
+☁️ **Cloud-Powered**
+- Uses Cloudflare Workers AI with Gemma 3 model (140+ languages)
+- Requires internet connection
+- Powered by global edge network for low latency
+- Your translations are processed by Cloudflare (see their privacy policy)
 
 🎨 **Beautiful UI**
 - Cute floating overlay with llama mascot 🦙
@@ -26,37 +26,31 @@ A beautiful, lightweight desktop app that translates selected text between Japan
 - Copy translation with one click
 - Smooth animations
 
-⚡ **Fast Setup**
-- Automatic Ollama detection
-- Visual setup guide for non-technical users
-- One-time installation, runs in background
+⚡ **Zero Setup**
+- Cloud-based, nothing to install except the app
+- Works immediately after download
+- Automatic configuration from Cloudflare Worker URL
 
 ## Installation
 
 ### Prerequisites
 - macOS (M1/M2/M3 or Intel)
-- Node.js 16+
+- Node.js 16+ (for development)
 - Rust 1.70+ (for building)
+- Internet connection (for translations)
 
-### 1. Install Ollama
+### 1. Deploy Cloudflare Worker
 
-Visit [ollama.ai](https://ollama.ai) and download the macOS version:
-- Click "Download"
-- Select your Mac type (M1/M2/M3 or Intel)
-- Run the installer
-- Ollama will start automatically
+First, set up the translation backend by deploying a Cloudflare Worker:
 
-### 2. Download the Model
+1. Go to https://dash.cloudflare.com
+2. Navigate to **Workers & Pages** → **Create application** → **Create Worker**
+3. Name it: `translator-proxy`
+4. Copy the Worker code from the [plan documentation](/plans/wiggly-forging-fairy.md)
+5. Paste into the Worker editor and deploy
+6. Copy your Worker URL: `https://translator-proxy.<your-account>.workers.dev`
 
-Open the Ollama app and download qwen2.5:1.5b:
-```bash
-# Or paste this in Terminal (Cmd+Space → type "terminal" → Enter):
-ollama run qwen2.5:1.5b
-```
-
-The model is ~1GB. First run may take 1-2 minutes to download.
-
-### 3. Setup This App
+### 2. Setup This App
 
 ```bash
 # Clone the repo
@@ -65,6 +59,10 @@ cd japanese-slack-translator
 
 # Install dependencies
 npm install
+
+# Install Cargo
+curl https://sh.rustup.rs -sSf | sh
+
 
 # Start development (hot reload)
 npm run tauri dev
@@ -89,34 +87,27 @@ On first run, macOS may ask for Accessibility permissions:
 - Add your Terminal app to the list
 - Restart the app
 
-### Configuration (Optional)
+### Configuration
 
-Create a `.env` file in the project root to customize:
+Create a `.env` file in the project root with your Cloudflare Worker URL:
 
 ```bash
-# Custom Ollama server (default: http://localhost:11434)
-OLLAMA_BASE_URL=http://localhost:11434
-
-# Different model (default: qwen2.5:1.5b)
-OLLAMA_MODEL=qwen2.5:1.5b
+# Your Cloudflare Worker URL (from step 1)
+WORKER_URL=https://translator-proxy.<your-account>.workers.dev
 ```
 
-Available Qwen models:
-- `qwen2.5:0.5b` - Fastest (~500MB)
-- `qwen2.5:1.5b` - Balanced (default, ~1GB)
-- `qwen2.5:3b` - Better quality (~2GB)
+Replace `<your-account>` with your Cloudflare account subdomain.
 
 ## Architecture
 
 ### Frontend (React + TypeScript)
 - **src/App.tsx** - Main app container
 - **src/components/TranslationOverlay.tsx** - Translation result display
-- **src/components/OllamaStatus.tsx** - Setup wizard & health check
 
 ### Backend (Rust + Tauri)
 - **src-tauri/src/lib.rs** - Application setup & hotkey registration
-- **src-tauri/src/commands.rs** - Tauri commands (translation, status check)
-- **src-tauri/src/translation.rs** - Ollama API integration
+- **src-tauri/src/commands.rs** - Tauri commands (translation)
+- **src-tauri/src/translation.rs** - Cloudflare Worker integration
 - **src-tauri/src/config.rs** - Configuration management
 - **src-tauri/src/clipboard_manager.rs** - Smart clipboard handling
 
@@ -125,7 +116,7 @@ Available Qwen models:
 1. **Hotkey Detection**: Global hotkey listener catches Cmd+J
 2. **Clipboard Capture**: Simulates Cmd+C to copy selected text
 3. **Language Detection**: Analyzes character ranges (Hiragana, Katakana, Kanji)
-4. **Translation**: Sends prompt to local Ollama instance
+4. **Translation**: Sends text to Cloudflare Worker proxy for translation
 5. **Display**: Shows result in overlay, user can copy
 6. **Cleanup**: Restores original clipboard content
 
@@ -159,41 +150,35 @@ Output: `src-tauri/target/release/bundle/`
 
 ## Performance
 
-**M1/M2/M3 MacBook:**
-- First translation: 2-3 seconds (model loads)
-- Subsequent translations: 1-2 seconds
-- Memory: ~2GB when active
-- CPU: Minimal (runs in background)
+**All MacBooks:**
+- Translation latency: 1-2 seconds (network + cloud processing)
+- Powered by Cloudflare's global edge network for low latency
+- Memory: Minimal (cloud processing)
+- CPU: Minimal (only clipboard + UI operations)
 
-**Intel Mac:**
-- Similar performance, may vary based on CPU
+**Requirements:**
+- Stable internet connection (required for translations)
+- Cloudflare Worker endpoint must be reachable
 
 ## Troubleshooting
 
-### "Ollama not running"
-```bash
-ollama serve
-```
-
-### "Model not found"
-```bash
-ollama pull qwen2.5:1.5b
-```
+### "Cannot reach translation service"
+- Check your internet connection
+- Verify your Cloudflare Worker is deployed and running
+- Check your `WORKER_URL` in `.env` is correct
 
 ### Hotkey doesn't work
 Go to **System Settings** → **Privacy & Security** → **Accessibility** and add your Terminal app.
 
 ### Slow translations
-- First run: Model is loading from disk (normal, ~2-3 min total)
-- Check Activity Monitor for CPU/memory usage
-- Consider using smaller model: `qwen2.5:0.5b`
+- Check your internet connection speed
+- Cloudflare Workers have global edge deployment, so latency is usually <1s
+- If translations are slow, it may be a network issue on your end
 
 ### Translations are poor quality
-- Qwen 2.5 1.5B is optimized for balance. If you need better quality:
-  ```bash
-  ollama pull qwen2.5:3b
-  ```
-  Then set `OLLAMA_MODEL=qwen2.5:3b` in `.env`
+- Gemma 3 is a high-quality model (12B parameters)
+- If translations seem off, try rephrasing your input
+- The model is multilingual and optimized for 140+ languages including Japanese
 
 ## Contributing
 
@@ -221,18 +206,20 @@ MIT License - see LICENSE file for details
 
 ## Acknowledgments
 
-- [Ollama](https://ollama.ai) - Local LLM runner
-- [Qwen 2.5](https://huggingface.co/Qwen) - Language model
+- [Cloudflare Workers AI](https://workers.cloudflare.com/product/workers-ai) - Cloud-based AI translation
+- [Google Gemma 3](https://ai.google.dev/gemma) - Language model
 - [Tauri](https://tauri.app) - Desktop app framework
 - [React](https://react.dev) - UI library
 
 ## Privacy & Security
 
-✅ **No data collection**
 ✅ **No telemetry**
-✅ **No remote API calls** (after Ollama setup)
-✅ **All processing local**
+✅ **Cloud-based processing** (via Cloudflare)
+✅ **No credentials in desktop app** (API token stays server-side)
+✅ **Rate limiting** (100 requests/hour per IP)
 ✅ **Open source** (inspect the code)
+
+⚠️ **Privacy Note**: Your translations are processed by Cloudflare. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/) for details.
 
 ## Roadmap
 

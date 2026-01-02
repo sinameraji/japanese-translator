@@ -2,38 +2,29 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use crate::config::TranslationConfig;
 
-/// Status of Ollama and model availability
-#[derive(Serialize, Clone, Debug)]
-pub struct OllamaStatus {
-    pub is_running: bool,
-    pub model_available: bool,
-    pub error_message: Option<String>,
-}
-
-/// Request structure for Ollama API
+/// Request structure for Worker API
 #[derive(Serialize)]
-struct OllamaRequest {
-    model: String,
-    prompt: String,
-    stream: bool,
-    options: Option<OllamaOptions>,
+struct WorkerRequest {
+    text: String,
+    target_lang: String,
 }
 
-/// Options for Ollama request
-#[derive(Serialize)]
-struct OllamaOptions {
-    temperature: f32,
-    num_predict: i32,
-}
-
-/// Response structure from Ollama API
+/// Response structure from Worker API
 #[derive(Deserialize)]
-struct OllamaResponse {
-    response: String,
+struct WorkerResponse {
+    translation: String,
     #[allow(dead_code)]
-    done: bool,
+    model: String,
+    #[allow(dead_code)]
+    detected_lang: Option<String>,
+}
+
+/// Error response from Worker API
+#[derive(Deserialize)]
+struct WorkerError {
+    error: String,
     #[serde(default)]
-    error: Option<String>,
+    code: Option<String>,
 }
 
 /// Detect if text is Japanese or English
@@ -66,144 +57,62 @@ pub fn get_target_language(detected: &str) -> &'static str {
     }
 }
 
-/// Translate text using Ollama API
+/// Translate text using Cloudflare Worker proxy
 pub async fn translate(text: &str, target_lang: &str, config: &TranslationConfig) -> Result<String, String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
         .map_err(|e| format!("HTTP client error: {}", e))?;
 
-    let prompt = format!(
-        "Translate the following Slack message to {}. Only provide the translation, nothing else:\n\n{}",
-        if target_lang == "ja" { "Japanese" } else { "English" },
-        text
-    );
-
-    let request = OllamaRequest {
-        model: config.ollama_model.clone(),
-        prompt,
-        stream: false,
-        options: Some(OllamaOptions {
-            temperature: 0.3,
-            num_predict: 512,
-        }),
+    let request = WorkerRequest {
+        text: text.to_string(),
+        target_lang: target_lang.to_string(),
     };
 
-    let url = format!("{}/api/generate", config.ollama_base_url);
-
     let response = client
-        .post(&url)
+        .post(&config.worker_url)
         .json(&request)
         .send()
         .await
         .map_err(|e| {
             if e.is_connect() {
-                "Ollama not running. Start with: ollama serve".to_string()
+                "Cannot reach translation service. Check your internet connection.".to_string()
             } else if e.is_timeout() {
-                "Ollama request timed out".to_string()
+                "Translation request timed out. Try again.".to_string()
             } else {
-                format!("Ollama request failed: {}", e)
+                format!("Translation request failed: {}", e)
             }
         })?;
 
-    if !response.status().is_success() {
-        return Err(format!("Ollama API error: {}", response.status()));
+    let status = response.status();
+
+    // Handle rate limiting
+    if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+        return Err("Rate limit exceeded. Please wait a moment and try again.".to_string());
     }
 
-    let ollama_response: OllamaResponse = response
+    // Handle other errors
+    if !status.is_success() {
+        let error_body: WorkerError = response
+            .json()
+            .await
+            .unwrap_or(WorkerError {
+                error: format!("HTTP error: {}", status),
+                code: None,
+            });
+        return Err(format!("Translation error: {}", error_body.error));
+    }
+
+    let worker_response: WorkerResponse = response
         .json()
         .await
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
 
-    if let Some(error) = ollama_response.error {
-        return Err(format!("Ollama error: {}", error));
-    }
-
-    let translation = ollama_response.response.trim().to_string();
+    let translation = worker_response.translation.trim().to_string();
 
     if translation.is_empty() {
         return Err("Empty translation response".to_string());
     }
 
     Ok(translation)
-}
-
-/// Check if Ollama is running and model is available
-pub async fn check_ollama_status(config: &TranslationConfig) -> OllamaStatus {
-    let client = match reqwest::Client::builder()
-        .timeout(Duration::from_secs(2))
-        .build()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            return OllamaStatus {
-                is_running: false,
-                model_available: false,
-                error_message: Some(format!("HTTP client error: {}", e)),
-            }
-        }
-    };
-
-    // Check if Ollama is running
-    let health_url = format!("{}/api/tags", config.ollama_base_url);
-    let health_response = match client.get(&health_url).send().await {
-        Ok(resp) => resp,
-        Err(e) => {
-            return OllamaStatus {
-                is_running: false,
-                model_available: false,
-                error_message: Some(format!("Ollama not running: {}", e)),
-            }
-        }
-    };
-
-    if !health_response.status().is_success() {
-        return OllamaStatus {
-            is_running: false,
-            model_available: false,
-            error_message: Some(format!("Ollama API error: {}", health_response.status())),
-        };
-    }
-
-    // Parse response to check for model
-    #[derive(Deserialize)]
-    struct TagsResponse {
-        models: Option<Vec<ModelInfo>>,
-    }
-
-    #[derive(Deserialize)]
-    struct ModelInfo {
-        name: String,
-    }
-
-    let tags_response: TagsResponse = match health_response.json().await {
-        Ok(r) => r,
-        Err(e) => {
-            return OllamaStatus {
-                is_running: true,
-                model_available: false,
-                error_message: Some(format!("Failed to parse models: {}", e)),
-            }
-        }
-    };
-
-    let model_available = tags_response
-        .models
-        .as_ref()
-        .map(|models| {
-            models.iter().any(|m| {
-                m.name.contains(&config.ollama_model) || m.name.starts_with(&config.ollama_model)
-            })
-        })
-        .unwrap_or(false);
-
-    OllamaStatus {
-        is_running: true,
-        model_available,
-        error_message: if !model_available {
-            Some(format!("Model '{}' not found", config.ollama_model))
-        } else {
-            None
-        },
-    }
 }
